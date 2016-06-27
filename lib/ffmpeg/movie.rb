@@ -8,13 +8,20 @@ module FFMPEG
     attr_reader :audio_stream, :audio_codec, :audio_bitrate, :audio_sample_rate, :audio_channels
     attr_reader :container
 
-    def initialize(path)
-      raise Errno::ENOENT, "the file '#{path}' does not exist" unless File.exist?(path)
+    def initialize(options)
 
-      @path = path
+      if options.is_a?(String)
+        path = options
+        raise Errno::ENOENT, "the file '#{path}' does not exist" unless File.exist?(path) || path.match('%d')
+        @path = path
 
-      # ffmpeg will output to stderr
-      command = "#{FFMPEG.ffprobe_binary} -i #{Shellwords.escape(path)} -print_format json -show_format -show_streams -show_error"
+        # ffmpeg will output to stderr
+        command = "#{FFMPEG.ffprobe_binary} -i #{Shellwords.escape(path)} -print_format json -show_format -show_streams -show_error"
+      else
+        return
+        command = "#{FFMPEG.ffprobe_binary} -print_format json -show_format -show_streams -show_error"
+      end
+
       std_output = ''
       std_error = ''
 

@@ -54,7 +54,12 @@ module FFMPEG
     private
     # frame= 4855 fps= 46 q=31.0 size=   45306kB time=00:02:42.28 bitrate=2287.0kbits/
     def transcode_movie
-      @command = "#{FFMPEG.ffmpeg_binary} -y -i #{Shellwords.escape(@movie.path)} #{@raw_options} #{Shellwords.escape(@output_file)}"
+
+      if @raw_options.to_s.match('-i')
+        @command = "#{FFMPEG.ffmpeg_binary} -y #{@raw_options} #{Shellwords.escape(@output_file)}"
+      else
+        @command = "#{FFMPEG.ffmpeg_binary} -y -i #{Shellwords.escape(@movie.path)} #{@raw_options} #{Shellwords.escape(@output_file)}"
+      end
       FFMPEG.logger.info("Running transcoding...\n#{@command}\n")
       @output = ""
 
@@ -70,7 +75,13 @@ module FFMPEG
               else # better make sure it wont blow up in case of unexpected output
                 time = 0.0
               end
-              progress = time / @movie.duration
+
+              begin
+                progress = time / @movie.duration
+              rescue
+                progress = 0
+              end
+
               yield(progress) if block_given?
             end
           end
